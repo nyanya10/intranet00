@@ -39,12 +39,13 @@ export default async function handler(req, res) {
             await redis.set('compendium_items', items);
             return res.status(200).json(items);
         } 
-        else if (req.method === 'PUT') {
+       else if (req.method === 'PUT') {
             const updatedItem = req.body;
-            items = items.map(item => item.id === updatedItem.id ? updatedItem : item);
+            // 문자열/숫자 타입 차이로 인한 수정 누락 오류 해결
+            items = items.map(item => String(item.id) === String(updatedItem.id) ? updatedItem : item);
             await redis.set('compendium_items', items);
             return res.status(200).json(items);
-        } 
+        }
       else if (req.method === 'DELETE') {
             const { id } = req.query;
             // 문자열/숫자 타입 차이로 인한 삭제 오류 방지
