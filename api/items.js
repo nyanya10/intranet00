@@ -45,9 +45,10 @@ export default async function handler(req, res) {
             await redis.set('compendium_items', items);
             return res.status(200).json(items);
         } 
-        else if (req.method === 'DELETE') {
+      else if (req.method === 'DELETE') {
             const { id } = req.query;
-            items = items.filter(item => item.id !== Number(id));
+            // 문자열/숫자 타입 차이로 인한 삭제 오류 방지
+            items = items.filter(item => String(item.id) !== String(id));
             await redis.set('compendium_items', items);
             return res.status(200).json(items);
         } 
