@@ -206,7 +206,7 @@
                             <span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md text-[11px] font-medium shrink-0 border border-indigo-100">${escapeHtml(item.source)}</span>
                         </div>
                         ${item.price !== undefined && item.price !== null && item.price !== '' ? `
-                            <p class="text-xs font-semibold text-emerald-600">💰 ${Number(item.price).toLocaleString()} 골드</p>
+                            <p class="text-xs font-semibold text-emerald-600"> ${Number(item.price).toLocaleString()} P</p>
                         ` : ''}
                         <p class="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">${escapeHtml(item.description)}</p>
                         
