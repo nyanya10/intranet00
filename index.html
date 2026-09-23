@@ -29,28 +29,22 @@
     <!-- 메인 컨테이너 -->
     <main class="max-w-4xl w-full mx-auto px-6 py-8 flex-grow">
         
-        <!-- 검색 및 획득처 필터 영역 -->
+        <!-- 검색 및 정렬 영역 -->
         <div class="flex flex-col sm:flex-row gap-4 mb-6">
-            <!-- 검색바 -->
             <div class="relative flex-grow">
                 <input type="text" id="searchInput" oninput="filterItems()" placeholder="아이템 이름, 종류, 획득처 또는 설명 검색..." 
                     class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
-            <!-- 정렬 버튼 추가 -->
             <button onclick="toggleSort()" id="sortBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 text-xs font-medium px-4 py-2.5 rounded-lg transition-colors cursor-pointer shrink-0">
                 정렬: 기본 순
             </button>
         </div>
 
         <!-- 획득처 필터 -->
-        <div id="sourceFilters" class="flex flex-wrap gap-2 mb-8">
-            <!-- 동적으로 생성됨 -->
-        </div>
+        <div id="sourceFilters" class="flex flex-wrap gap-2 mb-8"></div>
 
         <!-- 아이템 목록 그리드 -->
-        <div id="itemGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- 동적으로 생성됨 -->
-        </div>
+        <div id="itemGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
 
         <!-- 로딩 상태 안내 -->
         <div id="loadingState" class="text-center py-16 text-gray-400 text-sm">
@@ -64,17 +58,14 @@
     </main>
 
     <!-- 푸터 -->
-    <footer class="text-center py-6 text-xs text-gray-400 border-t border-gray-200 mt-auto">
-    </footer>
+    <footer class="text-center py-6 text-xs text-gray-400 border-t border-gray-200 mt-auto"></footer>
 
     <!-- 아이템 추가/수정 모달 -->
     <div id="itemModal" class="fixed inset-0 bg-black/50 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative animate-in fade-in zoom-in duration-150">
             <h2 id="modalTitle" class="text-lg font-bold text-gray-900 mb-4">새 아이템 추가</h2>
             <form id="addItemForm" onsubmit="handleSaveItem(event)" class="space-y-4">
-                <!-- 수정 시 아이템 구분을 위한 숨김 필드 -->
                 <input type="hidden" id="editIndexId" value="">
-
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">획득처</label>
                     <input type="text" id="inputSource" list="sourceList" required placeholder="예: 우주 쇼핑몰, 검역 실패 등"
@@ -86,11 +77,7 @@
                     <input type="text" id="inputCategory" list="categoryList" required placeholder="예: 소모품, 장비, 물약 등"
                         class="w-full bg-white border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <datalist id="categoryList">
-                        <option value="물약">
-                        <option value="장비">
-                        <option value="소모품">
-                        <option value="소지 전용">
-                        <option value="그 외">
+                        <option value="물약"><option value="장비"><option value="소모품"><option value="소지 전용"><option value="그 외">
                     </datalist>
                 </div>
                 <div>
@@ -109,12 +96,8 @@
                         class="w-full bg-white border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
-                        취소
-                    </button>
-                    <button type="submit" id="submitBtnText" class="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors shadow-xs cursor-pointer">
-                        추가하기
-                    </button>
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">취소</button>
+                    <button type="submit" id="submitBtnText" class="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors shadow-xs cursor-pointer">추가하기</button>
                 </div>
             </form>
         </div>
@@ -124,13 +107,12 @@
     <script>
         let items = [];
         let currentSource = '전체';
-        let isSortedByName = false; // 정렬 상태 플래그
+        let isSortedByName = false;
 
         document.addEventListener('DOMContentLoaded', () => {
             fetchItems();
         });
 
-        // 서버에서 데이터 불러오기
         async function fetchItems() {
             try {
                 const response = await fetch('/api/items');
@@ -145,7 +127,6 @@
             }
         }
 
-        // 정렬 토글 함수
         function toggleSort() {
             isSortedByName = !isSortedByName;
             const sortBtn = document.getElementById('sortBtn');
@@ -185,7 +166,6 @@
             const grid = document.getElementById('itemGrid');
             const noResult = document.getElementById('noResult');
 
-            // 1. 필터링 적용
             let filtered = items.filter(item => {
                 const matchesSource = currentSource === '전체' || item.source === currentSource;
                 const matchesKeyword = item.name.toLowerCase().includes(keyword) || 
@@ -195,7 +175,6 @@
                 return matchesSource && matchesKeyword;
             });
 
-            // 2. 가나다 순 정렬 적용 (활성화된 경우)
             if (isSortedByName) {
                 filtered.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
             }
@@ -210,43 +189,35 @@
             grid.innerHTML = filtered.map(item => `
                 <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between">
                     <div>
-                        <!-- 상단 태그 및 수정/삭제 버튼 -->
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex gap-1.5">
                                 <span class="text-xs font-semibold px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-md">${item.source}</span>
                                 <span class="text-xs font-semibold px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md">${item.type}</span>
                             </div>
                             <div class="flex gap-2">
-                                <button onclick="openEditModal(${item.id})" class="text-gray-400 hover:text-indigo-600 text-xs transition-colors cursor-pointer" title="수정">수정</button>
-                                <button onclick="deleteItem(${item.id})" class="text-gray-300 hover:text-red-500 text-xs transition-colors cursor-pointer" title="삭제">삭제</button>
+                                <button onclick="openEditModal(${item.id})" class="text-gray-400 hover:text-indigo-600 text-xs transition-colors cursor-pointer">수정</button>
+                                <button onclick="deleteItem(${item.id})" class="text-gray-300 hover:text-red-500 text-xs transition-colors cursor-pointer">삭제</button>
                             </div>
                         </div>
-                        
-                        <!-- 아이템 이름 및 가격 -->
                         <div class="flex items-center justify-between mb-1.5">
                             <h3 class="font-bold text-gray-900 text-base">${item.name}</h3>
                             <span class="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200/50">${item.price || '가격 없음'}</span>
                         </div>
-
-                        <!-- 설명 -->
                         <p class="text-sm text-gray-600 leading-relaxed">${item.description}</p>
                     </div>
                 </div>
             `).join('');
         }
 
-        // 모달 열기 (추가 모드)
         function openModal() {
             document.getElementById('modalTitle').innerText = '새 아이템 추가';
             document.getElementById('submitBtnText').innerText = '추가하기';
             document.getElementById('editIndexId').value = '';
             document.getElementById('addItemForm').reset();
-
             document.getElementById('itemModal').classList.remove('hidden');
             document.getElementById('itemModal').classList.add('flex');
         }
 
-        // 모달 열기 (수정 모드)
         function openEditModal(id) {
             const item = items.find(i => i.id === id);
             if (!item) return;
@@ -265,7 +236,6 @@
             document.getElementById('itemModal').classList.add('flex');
         }
 
-        // 모달 닫기
         function closeModal() {
             document.getElementById('itemModal').classList.add('hidden');
             document.getElementById('itemModal').classList.remove('flex');
@@ -273,10 +243,8 @@
             document.getElementById('editIndexId').value = '';
         }
 
-        // 저장 처리 (서버 연동 추가 또는 수정)
         async function handleSaveItem(event) {
             event.preventDefault();
-            
             const editId = document.getElementById('editIndexId').value;
             const itemData = {
                 source: document.getElementById('inputSource').value.trim(),
@@ -287,11 +255,10 @@
             };
 
             let url = '/api/items';
-            let method = 'POST';
+            let method = editId ? 'PUT' : 'POST';
 
             if (editId) {
                 itemData.id = Number(editId);
-                method = 'PUT';
             } else {
                 itemData.id = Date.now();
             }
@@ -316,7 +283,6 @@
             }
         }
 
-        // 아이템 삭제 (서버 연동)
         async function deleteItem(id) {
             if (confirm('이 아이템을 삭제하시겠습니까?')) {
                 try {
