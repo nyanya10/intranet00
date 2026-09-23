@@ -1,16 +1,19 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+
+// Upstash 환경 변수 자동 감지
+const redis = Redis.fromEnv();
 
 const DEFAULT_ITEMS = [
     { id: 1, source: "우주 쇼핑몰", type: "물약", name: "포도맛 물약", price: "1,500 P", description: "사용 시 3 일간 성별이 바뀝니다." },
-    { id: 2, source: "우주 쇼핑몰", type: "물약", name: "오렌맛 물약", price: "1,500 P", description: "사용 시 3 일간 어린이 상태가 됩니다." }
+    { id: 2, source: "우주 쇼핑몰", type: "물약", name: "오렌지맛 물약", price: "1,500 P", description: "사용 시 3 일간 어린이 상태가 됩니다." }
 ];
 
 export default async function handler(req, res) {
     try {
-        let items = await kv.get('compendium_items');
+        let items = await redis.get('compendium_items');
         if (!items) {
             items = DEFAULT_ITEMS;
-            await kv.set('compendium_items', items);
+            await redis.set('compendium_items', items);
         }
 
         if (req.method === 'GET') {
@@ -20,21 +23,21 @@ export default async function handler(req, res) {
         else if (req.method === 'POST') {
             const newItem = req.body;
             items.push(newItem);
-            await kv.set('compendium_items', items);
+            await redis.set('compendium_items', items);
             return res.status(200).json(items);
         } 
         
         else if (req.method === 'PUT') {
             const updatedItem = req.body;
             items = items.map(item => item.id === updatedItem.id ? updatedItem : item);
-            await kv.set('compendium_items', items);
+            await redis.set('compendium_items', items);
             return res.status(200).json(items);
         } 
         
         else if (req.method === 'DELETE') {
             const { id } = req.query;
             items = items.filter(item => item.id !== Number(id));
-            await kv.set('compendium_items', items);
+            await redis.set('compendium_items', items);
             return res.status(200).json(items);
         } 
         
