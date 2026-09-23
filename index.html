@@ -27,7 +27,7 @@
             <!-- Search Input -->
             <div class="relative flex-1">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"></span>
-                <input type="text" id="searchInput" oninput="handleSearch()" placeholder="아이템 이름 또는 설명 검색..." 
+                <input type="text" id="searchInput" oninput="handleSearch()" placeholder="아이템 이름, 설명 또는 주석 검색..." 
                     class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
             </div>
 
@@ -42,7 +42,7 @@
             </div>
         </div>
 
-        <!-- Source Filters -->
+        <!-- Source Filters (고정 순서 적용) -->
         <div id="sourceFilters" class="flex flex-wrap gap-1.5 items-center">
             <!-- JS dynamically injects source buttons here -->
         </div>
@@ -94,6 +94,12 @@
                         class="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
                 </div>
 
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-semibold text-gray-600 uppercase">메모 (선택사항)</label>
+                    <input type="text" id="itemNote" placeholder="예: 빵 가게에서 필수 사용"
+                        class="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
                 <div class="flex justify-end gap-2.5 mt-2">
                     <button type="button" onclick="closeModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-100 cursor-pointer">취소</button>
                     <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 cursor-pointer shadow-xs">저장</button>
@@ -104,7 +110,7 @@
 
     <!-- Footer -->
     <footer class="text-center py-6 text-xs text-gray-400 border-t border-gray-200 mt-auto">
-
+        &copy; 아이템 도감 시스템. All rights reserved.
     </footer>
 
     <!-- JavaScript Application Logic -->
@@ -128,16 +134,17 @@
             }
         }
 
-        // 획득처 필터 버튼 및 datalist 렌더링 (순서 고정 적용)
+        // 획득처 필터 버튼 및 datalist 렌더링 (항상 고정 순서 유지)
         function renderSources() {
             const rawSources = [...new Set(items.map(item => item.source))];
             
-            const customOrder = ["유쾌 판매소", "???", "우주 쇼핑몰", "어둠 탐사", "그 외"];
+            // 고정으로 항상 표시할 획득처 목록 순서 정의
+            const fixedSources = ["유쾌 판매소", "???", "우주 쇼핑몰", "어둠 회수품"];
 
-            const sortedSources = customOrder.filter(src => rawSources.includes(src));
-            const others = rawSources.filter(src => !customOrder.includes(src));
-            
-            const sources = ['전체', ...sortedSources, ...others];
+            // 데이터에 존재하는지 여부와 상관없이 fixedSources는 무조건 포함시키고, 
+            // 그 외에 사용자가 새로 추가한 획득처가 있다면 맨 뒤에 동적으로 추가
+            const otherSources = rawSources.filter(src => !fixedSources.includes(src));
+            const sources = ['전체', ...fixedSources, ...otherSources];
 
             const filterContainer = document.getElementById('sourceFilters');
             const sourceDataList = document.getElementById('sourceList');
@@ -149,7 +156,8 @@
                 </button>
             `).join('');
 
-            sourceDataList.innerHTML = rawSources.map(src => `<option value="${src}">`).join('');
+            // 입력창 자동완성(datalist)용 목록에는 모든 유효한 획득처 전달
+            sourceDataList.innerHTML = [...new Set([...fixedSources, ...rawSources])].map(src => `<option value="${src}">`).join('');
         }
 
         // 아이템 카드 목록 렌더링
@@ -160,8 +168,10 @@
             // 1. 필터링 적용
             let filtered = items.filter(item => {
                 const matchesSource = (currentSource === '전체' || item.source === currentSource);
-                const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                                      item.description.toLowerCase().includes(searchQuery.toLowerCase());
+                const query = searchQuery.toLowerCase();
+                const matchesSearch = item.name.toLowerCase().includes(query) || 
+                                      item.description.toLowerCase().includes(query) ||
+                                      (item.note && item.note.toLowerCase().includes(query));
                 return matchesSource && matchesSearch;
             });
 
@@ -196,9 +206,15 @@
                             <span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md text-[11px] font-medium shrink-0 border border-indigo-100">${escapeHtml(item.source)}</span>
                         </div>
                         ${item.price !== undefined && item.price !== null && item.price !== '' ? `
-                            <p class="text-xs font-semibold text-emerald-600"> ${Number(item.price).toLocaleString()} P </p>
+                            <p class="text-xs font-semibold text-emerald-600">💰 ${Number(item.price).toLocaleString()} 골드</p>
                         ` : ''}
                         <p class="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">${escapeHtml(item.description)}</p>
+                        
+                        ${item.note ? `
+                            <div class="mt-2 pt-2 border-t border-dashed border-gray-200 text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">
+                                <span class="font-semibold text-gray-600">주석:</span> ${escapeHtml(item.note)}
+                            </div>
+                        ` : ''}
                     </div>
                     <div class="flex justify-end gap-1 pt-2 border-t border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onclick="openEditModal(${item.id})" class="text-xs px-2.5 py-1 text-gray-600 hover:bg-gray-100 rounded-md transition-colors cursor-pointer font-medium">수정</button>
@@ -235,13 +251,14 @@
             document.getElementById('itemSource').value = currentSource === '전체' ? '' : currentSource;
             document.getElementById('itemPrice').value = '';
             document.getElementById('itemDescription').value = '';
+            document.getElementById('itemNote').value = '';
             document.getElementById('itemModal').classList.remove('hidden');
             document.getElementById('itemModal').classList.add('flex');
         }
 
         // 모달 열기 (수정 모드)
         function openEditModal(id) {
-            const item = items.find(i => i.id === id);
+            const item = items.find(i => String(i.id) === String(id));
             if (!item) return;
 
             document.getElementById('modalTitle').innerText = '아이템 수정';
@@ -250,6 +267,7 @@
             document.getElementById('itemSource').value = item.source;
             document.getElementById('itemPrice').value = item.price !== undefined ? item.price : '';
             document.getElementById('itemDescription').value = item.description;
+            document.getElementById('itemNote').value = item.note || '';
             document.getElementById('itemModal').classList.remove('hidden');
             document.getElementById('itemModal').classList.add('flex');
         }
@@ -261,21 +279,22 @@
         }
 
         // 폼 제출 (추가 또는 수정 API 호출)
-       async function handleFormSubmit(e) {
+        async function handleFormSubmit(e) {
             e.preventDefault();
             const id = document.getElementById('itemId').value;
             const name = document.getElementById('itemName').value;
             const source = document.getElementById('itemSource').value;
             const price = document.getElementById('itemPrice').value ? Number(document.getElementById('itemPrice').value) : 0;
             const description = document.getElementById('itemDescription').value;
+            const note = document.getElementById('itemNote').value.trim();
 
-            // 수정 모드일 경우 기존 id를 반드시 포함하고, 아니면 새 id 생성
             const payload = { 
                 id: id ? (isNaN(id) ? id : Number(id)) : Date.now(), 
                 name, 
                 source, 
                 price, 
-                description 
+                description,
+                note
             };
 
             try {
@@ -305,6 +324,7 @@
                 alert('처리 중 오류가 발생했습니다.');
             }
         }
+
         // 삭제 (DELETE)
         async function deleteItem(id) {
             if (!confirm('정말 이 아이템을 삭제하시겠습니까?')) return;
@@ -324,7 +344,8 @@
 
         // XSS 방지 유틸리티
         function escapeHtml(str) {
-            return str.replace(/[&<>'"]/g, 
+            if (!str) return '';
+            return String(str).replace(/[&<>'"]/g, 
                 tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
             );
         }
