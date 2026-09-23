@@ -6,142 +6,124 @@
     <title>아이템 도감</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Pretendard 폰트 적용 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
-    <style>
-        body {
-            font-family: 'Pretendard', sans-serif;
-        }
-    </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
 
-    <!-- 헤더 -->
+    <!-- Header -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-xs">
-        <div class="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
-            <h1 class="text-xl font-bold text-gray-900 tracking-tight">아이템 도감</h1>
-            <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors shadow-xs cursor-pointer">
-                + 아이템 추가
+        <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-gray-900 tracking-tight">📦 아이템 도감</h1>
+            <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer shadow-xs flex items-center gap-1.5">
+                <span>➕</span> 아이템 추가
             </button>
         </div>
     </header>
 
-    <!-- 메인 컨테이너 -->
-    <main class="max-w-4xl w-full mx-auto px-6 py-8 flex-grow">
-        
-        <!-- 검색 및 정렬 영역 -->
-        <div class="flex flex-col sm:flex-row gap-4 mb-6">
-            <div class="relative flex-grow">
-                <input type="text" id="searchInput" oninput="filterItems()" placeholder="아이템 이름, 종류, 획득처 또는 설명 검색..." 
-                    class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+    <!-- Main Container -->
+    <main class="max-w-5xl mx-auto px-4 py-6 flex-1 w-full flex flex-col gap-6">
+
+        <!-- Search & Filter Bar -->
+        <div class="flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center bg-white p-4 rounded-xl border border-gray-200 shadow-xs">
+            <!-- Search Input -->
+            <div class="relative flex-1">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔍</span>
+                <input type="text" id="searchInput" oninput="handleSearch()" placeholder="아이템 이름 또는 설명 검색..." 
+                    class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
             </div>
-            <button onclick="toggleSort()" id="sortBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 text-xs font-medium px-4 py-2.5 rounded-lg transition-colors cursor-pointer shrink-0">
-                정렬: 기본 순
-            </button>
+
+            <!-- Source Filters -->
+            <div id="sourceFilters" class="flex flex-wrap gap-1.5 items-center">
+                <!-- JS dynamically injects source buttons here -->
+            </div>
         </div>
 
-        <!-- 획득처 필터 -->
-        <div id="sourceFilters" class="flex flex-wrap gap-2 mb-8"></div>
-
-        <!-- 아이템 목록 그리드 -->
-        <div id="itemGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-
-        <!-- 로딩 상태 안내 -->
-        <div id="loadingState" class="text-center py-16 text-gray-400 text-sm">
-            데이터를 불러오는 중입니다...
+        <!-- Item Grid -->
+        <div id="itemGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <!-- JS dynamically injects item cards here -->
         </div>
 
-        <!-- 검색 결과 없음 안내 -->
-        <div id="noResult" class="hidden text-center py-16 text-gray-400 text-sm">
-            등록된 아이템이 없거나 검색 결과가 없습니다.
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden flex-col items-center justify-center py-16 text-center">
+            <p class="text-4xl mb-2">📭</p>
+            <p class="text-gray-500 font-medium">검색된 아이템이 없습니다.</p>
         </div>
     </main>
 
-    <!-- 푸터 -->
-    <footer class="text-center py-6 text-xs text-gray-400 border-t border-gray-200 mt-auto"></footer>
-
-    <!-- 아이템 추가/수정 모달 -->
+    <!-- Modal (Add / Edit) -->
     <div id="itemModal" class="fixed inset-0 bg-black/50 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative animate-in fade-in zoom-in duration-150">
-            <h2 id="modalTitle" class="text-lg font-bold text-gray-900 mb-4">새 아이템 추가</h2>
-            <form id="addItemForm" onsubmit="handleSaveItem(event)" class="space-y-4">
-                <input type="hidden" id="editIndexId" value="">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">획득처</label>
-                    <input type="text" id="inputSource" list="sourceList" required placeholder="예: 우주 쇼핑몰, 검역 실패 등"
-                        class="w-full bg-white border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden flex flex-col animate-in fade-in zoom-in duration-150">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <h3 id="modalTitle" class="font-bold text-gray-900">새 아이템 추가</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold cursor-pointer">&times;</button>
+            </div>
+            <form id="itemForm" onsubmit="handleFormSubmit(event)" class="p-6 flex flex-col gap-4">
+                <input type="hidden" id="itemId">
+                
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-semibold text-gray-600 uppercase">아이템 이름</label>
+                    <input type="text" id="itemName" required placeholder="예: 체력 회복 물약"
+                        class="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-semibold text-gray-600 uppercase">획득처</label>
+                    <input type="text" id="itemSource" required list="sourceList" placeholder="예: 유쾌 판매소"
+                        class="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <datalist id="sourceList"></datalist>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">아이템 종류</label>
-                    <input type="text" id="inputCategory" list="categoryList" required placeholder="예: 소모품, 장비, 물약 등"
-                        class="w-full bg-white border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <datalist id="categoryList">
-                        <option value="물약"><option value="장비"><option value="소모품"><option value="소지 전용"><option value="그 외">
-                    </datalist>
+
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-semibold text-gray-600 uppercase">설명</label>
+                    <textarea id="itemDescription" rows="3" required placeholder="아이템에 대한 설명을 입력하세요..."
+                        class="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">아이템 이름</label>
-                    <input type="text" id="inputName" required placeholder="아이템 이름을 입력하세요"
-                        class="w-full bg-white border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">가격</label>
-                    <input type="text" id="inputPrice" required placeholder="500P 또는 가격 없음"
-                        class="w-full bg-white border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">설명</label>
-                    <textarea id="inputDesc" rows="3" required placeholder="아이템 설명을 입력하세요"
-                        class="w-full bg-white border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">취소</button>
-                    <button type="submit" id="submitBtnText" class="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors shadow-xs cursor-pointer">추가하기</button>
+
+                <div class="flex justify-end gap-2.5 mt-2">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-100 cursor-pointer">취소</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 cursor-pointer shadow-xs">저장</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- 스크립트 로직 -->
+    <!-- Footer -->
+    <footer class="text-center py-6 text-xs text-gray-400 border-t border-gray-200 mt-auto">
+        &copy; 아이템 도감 시스템. All rights reserved.
+    </footer>
+
+    <!-- JavaScript Application Logic -->
     <script>
         let items = [];
         let currentSource = '전체';
-        let isSortedByName = false;
+        let searchQuery = '';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchItems();
-        });
-
+        // 데이터 불러오기 (초기 실행)
         async function fetchItems() {
             try {
-                const response = await fetch('/api/items');
-                if (!response.ok) throw new Error('데이터 로드 실패');
-                items = await response.json();
-                
-                document.getElementById('loadingState').classList.add('hidden');
+                const res = await fetch('/api/items');
+                if (!res.ok) throw new Error('데이터를 불러오지 못했습니다.');
+                items = await res.json();
                 renderSources();
-                filterItems();
-            } catch (error) {
-                document.getElementById('loadingState').innerText = '데이터를 불러오는 중 오류가 발생했습니다.';
+                renderItems();
+            } catch (err) {
+                console.error(err);
+                alert('서버로부터 아이템 목록을 불러오는 중 오류가 발생했습니다.');
             }
         }
 
-        function toggleSort() {
-            isSortedByName = !isSortedByName;
-            const sortBtn = document.getElementById('sortBtn');
-            if (isSortedByName) {
-                sortBtn.innerText = "정렬: 가나다 순";
-                sortBtn.className = "bg-indigo-50 border border-indigo-300 text-indigo-700 text-xs font-medium px-4 py-2.5 rounded-lg transition-colors cursor-pointer shrink-0";
-            } else {
-                sortBtn.innerText = "정렬: 기본 순";
-                sortBtn.className = "bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 text-xs font-medium px-4 py-2.5 rounded-lg transition-colors cursor-pointer shrink-0";
-            }
-            filterItems();
-        }
-
+        // 획득처 필터 버튼 및 datalist 렌더링 (순서 고정 적용)
         function renderSources() {
-            const sources = ['전체', ...new Set(items.map(item => item.source))];
+            const rawSources = [...new Set(items.map(item => item.source))];
+            
+            // 사용자가 지정한 고정 순서 정의
+            const customOrder = ["유쾌 판매소", "???", "우주 쇼핑몰", "어둠 탐사", "그 외"];
+
+            // 지정된 순서대로 정렬하되, 지정되지 않은 새로운 획득처가 있다면 맨 뒤에 추가
+            const sortedSources = customOrder.filter(src => rawSources.includes(src));
+            const others = rawSources.filter(src => !customOrder.includes(src));
+            
+            const sources = ['전체', ...sortedSources, ...others];
+
             const filterContainer = document.getElementById('sourceFilters');
             const sourceDataList = document.getElementById('sourceList');
 
@@ -152,156 +134,158 @@
                 </button>
             `).join('');
 
-            sourceDataList.innerHTML = sources.filter(s => s !== '전체').map(src => `<option value="${src}">`).join('');
+            sourceDataList.innerHTML = rawSources.map(src => `<option value="${src}">`).join('');
         }
 
-        function setSource(source) {
-            currentSource = source;
-            renderSources();
-            filterItems();
-        }
-
-        function filterItems() {
-            const keyword = document.getElementById('searchInput').value.toLowerCase();
+        // 아이템 카드 목록 렌더링
+        function renderItems() {
             const grid = document.getElementById('itemGrid');
-            const noResult = document.getElementById('noResult');
+            const emptyState = document.getElementById('emptyState');
 
-            let filtered = items.filter(item => {
-                const matchesSource = currentSource === '전체' || item.source === currentSource;
-                const matchesKeyword = item.name.toLowerCase().includes(keyword) || 
-                                       item.type.toLowerCase().includes(keyword) || 
-                                       item.description.toLowerCase().includes(keyword) ||
-                                       item.source.toLowerCase().includes(keyword);
-                return matchesSource && matchesKeyword;
+            // 필터링 적용
+            const filtered = items.filter(item => {
+                const matchesSource = (currentSource === '전체' || item.source === currentSource);
+                const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                      item.description.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchesSource && matchesSearch;
             });
-
-            if (isSortedByName) {
-                filtered.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-            }
 
             if (filtered.length === 0) {
                 grid.innerHTML = '';
-                noResult.classList.remove('hidden');
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
                 return;
             }
 
-            noResult.classList.add('hidden');
+            emptyState.classList.remove('flex');
+            emptyState.classList.add('hidden');
+
             grid.innerHTML = filtered.map(item => `
-                <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="flex gap-1.5">
-                                <span class="text-xs font-semibold px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-md">${item.source}</span>
-                                <span class="text-xs font-semibold px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md">${item.type}</span>
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="openEditModal(${item.id})" class="text-gray-400 hover:text-indigo-600 text-xs transition-colors cursor-pointer">수정</button>
-                                <button onclick="deleteItem(${item.id})" class="text-gray-300 hover:text-red-500 text-xs transition-colors cursor-pointer">삭제</button>
-                            </div>
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between gap-3 relative group">
+                    <div class="flex flex-col gap-1.5">
+                        <div class="flex justify-between items-start gap-2">
+                            <h3 class="font-bold text-gray-900 text-base leading-snug">${escapeHtml(item.name)}</h3>
+                            <span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md text-[11px] font-medium shrink-0 border border-indigo-100">${escapeHtml(item.source)}</span>
                         </div>
-                        <div class="flex items-center justify-between mb-1.5">
-                            <h3 class="font-bold text-gray-900 text-base">${item.name}</h3>
-                            <span class="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200/50">${item.price || '가격 없음'}</span>
-                        </div>
-                        <p class="text-sm text-gray-600 leading-relaxed">${item.description}</p>
+                        <p class="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">${escapeHtml(item.description)}</p>
+                    </div>
+                    <div class="flex justify-end gap-1 pt-2 border-t border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="openEditModal(${item.id})" class="text-xs px-2.5 py-1 text-gray-600 hover:bg-gray-100 rounded-md transition-colors cursor-pointer font-medium">수정</button>
+                        <button onclick="deleteItem(${item.id})" class="text-xs px-2.5 py-1 text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer font-medium">삭제</button>
                     </div>
                 </div>
             `).join('');
         }
 
+        // 검색어 입력 핸들러
+        function handleSearch() {
+            searchQuery = document.getElementById('searchInput').value;
+            renderItems();
+        }
+
+        // 획득처 탭 선택 핸들러
+        function setSource(src) {
+            currentSource = src;
+            renderSources();
+            renderItems();
+        }
+
+        // 모달 열기 (추가 모드)
         function openModal() {
             document.getElementById('modalTitle').innerText = '새 아이템 추가';
-            document.getElementById('submitBtnText').innerText = '추가하기';
-            document.getElementById('editIndexId').value = '';
-            document.getElementById('addItemForm').reset();
+            document.getElementById('itemId').value = '';
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemSource').value = currentSource === '전체' ? '' : currentSource;
+            document.getElementById('itemDescription').value = '';
             document.getElementById('itemModal').classList.remove('hidden');
             document.getElementById('itemModal').classList.add('flex');
         }
 
+        // 모달 열기 (수정 모드)
         function openEditModal(id) {
             const item = items.find(i => i.id === id);
             if (!item) return;
 
             document.getElementById('modalTitle').innerText = '아이템 수정';
-            document.getElementById('submitBtnText').innerText = '수정하기';
-            document.getElementById('editIndexId').value = item.id;
-
-            document.getElementById('inputSource').value = item.source;
-            document.getElementById('inputCategory').value = item.type;
-            document.getElementById('inputName').value = item.name;
-            document.getElementById('inputPrice').value = item.price;
-            document.getElementById('inputDesc').value = item.description;
-
+            document.getElementById('itemId').value = item.id;
+            document.getElementById('itemName').value = item.name;
+            document.getElementById('itemSource').value = item.source;
+            document.getElementById('itemDescription').value = item.description;
             document.getElementById('itemModal').classList.remove('hidden');
             document.getElementById('itemModal').classList.add('flex');
         }
 
+        // 모달 닫기
         function closeModal() {
-            document.getElementById('itemModal').classList.add('hidden');
             document.getElementById('itemModal').classList.remove('flex');
-            document.getElementById('addItemForm').reset();
-            document.getElementById('editIndexId').value = '';
+            document.getElementById('itemModal').classList.add('hidden');
         }
 
-        async function handleSaveItem(event) {
-            event.preventDefault();
-            const editId = document.getElementById('editIndexId').value;
-            const itemData = {
-                source: document.getElementById('inputSource').value.trim(),
-                type: document.getElementById('inputCategory').value.trim(),
-                name: document.getElementById('inputName').value.trim(),
-                price: document.getElementById('inputPrice').value.trim(),
-                description: document.getElementById('inputDesc').value.trim()
-            };
+        // 폼 제출 (추가 또는 수정 API 호출)
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('itemId').value;
+            const name = document.getElementById('itemName').value;
+            const source = document.getElementById('itemSource').value;
+            const description = document.getElementById('itemDescription').value;
 
-            let url = '/api/items';
-            let method = editId ? 'PUT' : 'POST';
-
-            if (editId) {
-                itemData.id = Number(editId);
-            } else {
-                itemData.id = Date.now();
-            }
+            const payload = { name, source, description };
 
             try {
-                const response = await fetch(url, {
-                    method: method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(itemData)
+                let res;
+                if (id) {
+                    // 수정 (PUT)
+                    payload.id = Number(id);
+                    res = await fetch('/api/items', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    // 추가 (POST)
+                    res = await fetch('/api/items', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                if (!res.ok) throw new Error('저장에 실패했습니다.');
+
+                closeModal();
+                fetchItems(); // 데이터 새로고침
+            } catch (err) {
+                console.error(err);
+                alert('처리 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 삭제 (DELETE)
+        async function deleteItem(id) {
+            if (!confirm('정말 이 아이템을 삭제하시겠습니까?')) return;
+
+            try {
+                const res = await fetch(`/api/items?id=${id}`, {
+                    method: 'DELETE'
                 });
 
-                if (response.ok) {
-                    items = await response.json();
-                    renderSources();
-                    filterItems();
-                    closeModal();
-                } else {
-                    alert('저장 중 오류가 발생했습니다.');
-                }
-            } catch (error) {
-                alert('서버 통신 중 오류가 발생했습니다.');
+                if (!res.ok) throw new Error('삭제에 실패했습니다.');
+                fetchItems();
+            } catch (err) {
+                console.error(err);
+                alert('삭제 중 오류가 발생했습니다.');
             }
         }
 
-        async function deleteItem(id) {
-            if (confirm('이 아이템을 삭제하시겠습니까?')) {
-                try {
-                    const response = await fetch(`/api/items?id=${id}`, {
-                        method: 'DELETE'
-                    });
-
-                    if (response.ok) {
-                        items = await response.json();
-                        renderSources();
-                        filterItems();
-                    } else {
-                        alert('삭제 중 오류가 발생했습니다.');
-                    }
-                } catch (error) {
-                    alert('서버 통신 중 오류가 발생했습니다.');
-                }
-            }
+        // XSS 방지 유틸리티
+        function escapeHtml(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
         }
+
+        // 페이지 최초 로드 시 실행
+        fetchItems();
     </script>
 </body>
 </html>
