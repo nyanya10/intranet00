@@ -1,6 +1,5 @@
 import { Redis } from '@upstash/redis';
 
-// Upstash 환경 변수 자동 감지
 const redis = Redis.fromEnv();
 
 const DEFAULT_ITEMS = [
