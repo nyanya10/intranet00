@@ -261,7 +261,7 @@
         }
 
         // 폼 제출 (추가 또는 수정 API 호출)
-        async function handleFormSubmit(e) {
+       async function handleFormSubmit(e) {
             e.preventDefault();
             const id = document.getElementById('itemId').value;
             const name = document.getElementById('itemName').value;
@@ -269,13 +269,19 @@
             const price = document.getElementById('itemPrice').value ? Number(document.getElementById('itemPrice').value) : 0;
             const description = document.getElementById('itemDescription').value;
 
-            const payload = { name, source, price, description };
+            // 수정 모드일 경우 기존 id를 반드시 포함하고, 아니면 새 id 생성
+            const payload = { 
+                id: id ? (isNaN(id) ? id : Number(id)) : Date.now(), 
+                name, 
+                source, 
+                price, 
+                description 
+            };
 
             try {
                 let res;
                 if (id) {
                     // 수정 (PUT)
-                    payload.id = Number(id);
                     res = await fetch('/api/items', {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
@@ -299,7 +305,6 @@
                 alert('처리 중 오류가 발생했습니다.');
             }
         }
-
         // 삭제 (DELETE)
         async function deleteItem(id) {
             if (!confirm('정말 이 아이템을 삭제하시겠습니까?')) return;
