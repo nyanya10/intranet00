@@ -52,6 +52,11 @@
             <!-- 동적으로 생성됨 -->
         </div>
 
+        <!-- 로딩 상태 안내 -->
+        <div id="loadingState" class="text-center py-16 text-gray-400 text-sm">
+            데이터를 불러오는 중입니다...
+        </div>
+
         <!-- 검색 결과 없음 안내 -->
         <div id="noResult" class="hidden text-center py-16 text-gray-400 text-sm">
             등록된 아이템이 없거나 검색 결과가 없습니다.
@@ -85,7 +90,7 @@
                         <option value="장비">
                         <option value="소모품">
                         <option value="소지 전용">
-                             <option value="그 외">
+                        <option value="그 외">
                     </datalist>
                 </div>
                 <div>
@@ -117,20 +122,28 @@
 
     <!-- 스크립트 로직 -->
     <script>
-        const defaultItems = [
-             { id: 1, source: "우주 쇼핑몰", type: "물약", name: "포도맛 물약", price: "1,500 P", description: "사용 시 3 일간 성별이 바뀝니다." },
-             { id: 2, source: "우주 쇼핑몰", type: "물약", name: "오렌맛 물약", price: "1,500 P", description: "사용 시 3 일간 어린이 상태가 됩니다." },
-
-        ];
-
-        let items = JSON.parse(localStorage.getItem('compendium_items')) || defaultItems;
+        let items = [];
         let currentSource = '전체';
         let isSortedByName = false; // 정렬 상태 플래그
 
         document.addEventListener('DOMContentLoaded', () => {
-            renderSources();
-            filterItems();
+            fetchItems();
         });
+
+        // 서버에서 데이터 불러오기
+        async function fetchItems() {
+            try {
+                const response = await fetch('/api/items');
+                if (!response.ok) throw new Error('데이터 로드 실패');
+                items = await response.json();
+                
+                document.getElementById('loadingState').classList.add('hidden');
+                renderSources();
+                filterItems();
+            } catch (error) {
+                document.getElementById('loadingState').innerText = '데이터를 불러오는 중 오류가 발생했습니다.';
+            }
+        }
 
         // 정렬 토글 함수
         function toggleSort() {
@@ -260,55 +273,68 @@
             document.getElementById('editIndexId').value = '';
         }
 
-        // 저장 처리 (추가 또는 수정 분기)
-        function handleSaveItem(event) {
+        // 저장 처리 (서버 연동 추가 또는 수정)
+        async function handleSaveItem(event) {
             event.preventDefault();
             
             const editId = document.getElementById('editIndexId').value;
-            const source = document.getElementById('inputSource').value.trim();
-            const type = document.getElementById('inputCategory').value.trim();
-            const name = document.getElementById('inputName').value.trim();
-            const price = document.getElementById('inputPrice').value.trim();
-            const description = document.getElementById('inputDesc').value.trim();
+            const itemData = {
+                source: document.getElementById('inputSource').value.trim(),
+                type: document.getElementById('inputCategory').value.trim(),
+                name: document.getElementById('inputName').value.trim(),
+                price: document.getElementById('inputPrice').value.trim(),
+                description: document.getElementById('inputDesc').value.trim()
+            };
+
+            let url = '/api/items';
+            let method = 'POST';
 
             if (editId) {
-                // 수정
-                items = items.map(item => {
-                    if (item.id == editId) {
-                        return { ...item, source, type, name, price, description };
-                    }
-                    return item;
-                });
+                itemData.id = Number(editId);
+                method = 'PUT';
             } else {
-                // 추가
-                const newItem = {
-                    id: Date.now(),
-                    source,
-                    type,
-                    name,
-                    price,
-                    description
-                };
-                items.push(newItem);
+                itemData.id = Date.now();
             }
 
-            saveAndRefresh();
-            closeModal();
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(itemData)
+                });
+
+                if (response.ok) {
+                    items = await response.json();
+                    renderSources();
+                    filterItems();
+                    closeModal();
+                } else {
+                    alert('저장 중 오류가 발생했습니다.');
+                }
+            } catch (error) {
+                alert('서버 통신 중 오류가 발생했습니다.');
+            }
         }
 
-        // 아이템 삭제
-        function deleteItem(id) {
+        // 아이템 삭제 (서버 연동)
+        async function deleteItem(id) {
             if (confirm('이 아이템을 삭제하시겠습니까?')) {
-                items = items.filter(item => item.id !== id);
-                saveAndRefresh();
-            }
-        }
+                try {
+                    const response = await fetch(`/api/items?id=${id}`, {
+                        method: 'DELETE'
+                    });
 
-        // 로컬 스토리지 저장 및 화면 갱신
-        function saveAndRefresh() {
-            localStorage.setItem('compendium_items', JSON.stringify(items));
-            renderSources();
-            filterItems();
+                    if (response.ok) {
+                        items = await response.json();
+                        renderSources();
+                        filterItems();
+                    } else {
+                        alert('삭제 중 오류가 발생했습니다.');
+                    }
+                } catch (error) {
+                    alert('서버 통신 중 오류가 발생했습니다.');
+                }
+            }
         }
     </script>
 </body>
